@@ -69,23 +69,17 @@ CJSON_PUBLIC(const char*) cJSON_Version(void)
     return version;
 }
 
-/* case insensitive strcmp */
-static int cJSON_strcasecmp(const unsigned char *string1, const unsigned char *string2)
+/* Case insensitive string comparison, doesn't consider two NULL pointers equal though */
+static int case_insensitive_strcmp(const unsigned char *string1, const unsigned char *string2)
 {
-    if (string1 == NULL)
+    if ((string1 == NULL) || (string2 == NULL))
     {
-        if (string2 == NULL)
-        {
-            /* both NULL */
-            return 0;
-        }
-
         return 1;
     }
 
-    if (string2 == NULL)
+    if (string1 == string2)
     {
-        return 1;
+        return 0;
     }
 
     for(; tolower(*string1) == tolower(*string2); (void)string1++, string2++)
@@ -96,7 +90,7 @@ static int cJSON_strcasecmp(const unsigned char *string1, const unsigned char *s
         }
     }
 
-    return tolower(string1[0]) - tolower(string2[0]);
+    return tolower(*string1) - tolower(*string2);
 }
 
 typedef struct internal_hooks
@@ -1665,7 +1659,7 @@ CJSON_PUBLIC(cJSON *) cJSON_GetArrayItem(const cJSON *array, int item)
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON *object, const char *string)
 {
     cJSON *c = object ? object->child : NULL;
-    while (c && cJSON_strcasecmp((unsigned char*)c->string, (const unsigned char*)string))
+    while (c && !case_insensitive_strcmp((unsigned char*)c->string, (const unsigned char*)string))
     {
         c = c->next;
     }
@@ -1839,7 +1833,7 @@ CJSON_PUBLIC(cJSON *) cJSON_DetachItemFromObject(cJSON *object, const char *stri
 {
     size_t i = 0;
     cJSON *c = object->child;
-    while (c && cJSON_strcasecmp((unsigned char*)c->string, (const unsigned char*)string))
+    while (c && !case_insensitive_strcmp((unsigned char*)c->string, (const unsigned char*)string))
     {
         i++;
         c = c->next;
@@ -1927,7 +1921,7 @@ CJSON_PUBLIC(void) cJSON_ReplaceItemInObject(cJSON *object, const char *string, 
 {
     size_t i = 0;
     cJSON *c = object->child;
-    while(c && cJSON_strcasecmp((unsigned char*)c->string, (const unsigned char*)string))
+    while(c && !case_insensitive_strcmp((unsigned char*)c->string, (const unsigned char*)string))
     {
         i++;
         c = c->next;
